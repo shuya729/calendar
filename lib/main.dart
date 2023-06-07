@@ -28,7 +28,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.teal,
+        primarySwatch: Colors.blueGrey,
       ),
       // home: const MainScreen(),
       home: (ref.watch(authenticationProvider).value == null)
@@ -42,6 +42,8 @@ final deltaPositionProvider = StateProvider<double>((ref) => 0.0);
 final focusedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 final selectedDayProvider = StateProvider<DateTime?>((ref) => null);
 final editmodeProvider = StateProvider<bool>((ref) => false);
+final selectedUserProvider =
+    StateProvider<UserData>((ref) => ref.watch(myInformationProvider));
 final authenticationProvider =
     StreamProvider<User?>((ref) => FirebaseAuth.instance.authStateChanges());
 // final myInformationProvider = StateProvider<UserData>((ref) {
@@ -264,8 +266,8 @@ class MainScreen extends ConsumerWidget {
         shape: BoxShape.circle,
         color:
             (_myEvents.containsKey(DateTime.utc(day.year, day.month, day.day)))
-                ? Colors.black26
-                : Color(0xffa6d1c4),
+                ? Color(0xff00214d).withOpacity(0.3)
+                : Color(0xff00ebc7).withOpacity(0.6),
       ),
     );
     if (_numbersFriendsEvent == 0) {
@@ -303,15 +305,18 @@ class MainScreen extends ConsumerWidget {
           shape: BoxShape.circle,
           color: (_myEvents
                   .containsKey(DateTime.utc(day.year, day.month, day.day)))
-              ? Colors.black26
-              : Color(0xffa6d1c4),
+              ? Color(0xff00214d).withOpacity(0.3)
+              : Color(0xff00ebc7).withOpacity(0.6),
         ),
         child: Center(
           child: Text(
             "${_numbersFriendsEvent}",
             style: TextStyle(
-              fontSize: 12.0,
-              color: Colors.white,
+              fontSize: 15.0,
+              color: (_myEvents
+                      .containsKey(DateTime.utc(day.year, day.month, day.day)))
+                  ? Color(0xfffffffe)
+                  : Color(0xff00214d).withOpacity(0.8),
             ),
           ),
         ),
@@ -338,6 +343,12 @@ class MainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final Color stroke = Color(0xff00214d);
+    final Color main = Color(0xfffffffe);
+    final Color HighLight = Color(0xff00ebc7);
+    final Color secondary = Color(0xffff5470);
+    final Color tertiary = Color(0xfffde24f);
+
     final double areaHeight = MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
@@ -356,7 +367,8 @@ class MainScreen extends ConsumerWidget {
         ref.watch(friendsEventsProvider);
 
     return Scaffold(
-      backgroundColor: Color(0xffa6d1c4),
+      backgroundColor: secondary,
+      // Color(0xffa6d1c4),
       body: SafeArea(
         child: Stack(
           // alignment: ,
@@ -364,10 +376,8 @@ class MainScreen extends ConsumerWidget {
           // clipBehavior: ,
           children: [
             Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: areaWidth * 0.02,
-              ),
-              color: Color(0xffa6d1c4), //subColor 0xfffdce31
+              color: secondary,
+              // Color(0xffa6d1c4), //subColor 0xfffdce31
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -384,23 +394,38 @@ class MainScreen extends ConsumerWidget {
                             left: areaHeight * 0.01,
                             right: areaHeight * 0.01,
                           ),
-                          child: Column(
-                            children: [
-                              CircleAvatar(
-                                radius: areaHeight * 0.045,
-                                backgroundImage: NetworkImage(
-                                  '${_friendsInformation[index].imageUrl}',
+                          child: GestureDetector(
+                            onTap: () {
+                              ref.read(selectedUserProvider.notifier).state =
+                                  (index == 0)
+                                      ? _myInformation
+                                      : _friendsInformation[index - 1];
+                              print((index == 0)
+                                  ? _myInformation.id
+                                  : _friendsInformation[index - 1].id);
+                            },
+                            child: Column(
+                              children: [
+                                CircleAvatar(
+                                  radius: areaHeight * 0.045,
+                                  backgroundImage: NetworkImage(
+                                    (index == 0)
+                                        ? '${_myInformation.imageUrl}'
+                                        : '${_friendsInformation[index - 1].imageUrl}',
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: areaHeight * 0.005),
-                              Text(
-                                '${_friendsInformation[index].name}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white,
+                                SizedBox(height: areaHeight * 0.005),
+                                Text(
+                                  (index == 0)
+                                      ? '${_myInformation.name}'
+                                      : '${_friendsInformation[index - 1].name}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: stroke,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -420,16 +445,19 @@ class MainScreen extends ConsumerWidget {
                               onPressed: () {},
                               icon: Icon(Icons.person_add),
                               iconSize: areaHeight * 0.05,
+                              color: stroke,
                             ),
                             IconButton(
                               onPressed: () {},
                               icon: Icon(Icons.notifications),
                               iconSize: areaHeight * 0.05,
+                              color: stroke,
                             ),
                             IconButton(
                               onPressed: () {},
                               icon: Icon(Icons.settings),
                               iconSize: areaHeight * 0.05,
+                              color: stroke,
                             )
                           ],
                         ),
@@ -438,7 +466,10 @@ class MainScreen extends ConsumerWidget {
                           child: Text(
                             "ロゴ",
                             style: TextStyle(
-                                fontSize: 40, fontWeight: FontWeight.bold),
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              color: stroke,
+                            ),
                           ),
                         ),
                       ],
@@ -471,7 +502,8 @@ class MainScreen extends ConsumerWidget {
                     horizontal: areaWidth * 0.05,
                   ),
                   decoration: ShapeDecoration(
-                    color: Colors.white,
+                    color: main,
+                    // Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.only(
                         topRight: Radius.circular(areaHeight * 0.05),
@@ -487,7 +519,10 @@ class MainScreen extends ConsumerWidget {
                           Text(
                             "${_focusedDay.year}年${_focusedDay.month}月",
                             style: TextStyle(
-                                fontSize: 20.0, fontWeight: FontWeight.normal),
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.normal,
+                              color: stroke,
+                            ),
                           ),
                           (_editmode)
                               ? IconButton(
@@ -495,14 +530,20 @@ class MainScreen extends ConsumerWidget {
                                     ref.read(editmodeProvider.notifier).state =
                                         false;
                                   },
-                                  icon: Icon(Icons.check),
+                                  icon: Icon(
+                                    Icons.check,
+                                    color: stroke,
+                                  ),
                                 )
                               : IconButton(
                                   onPressed: () {
                                     ref.read(editmodeProvider.notifier).state =
                                         true;
                                   },
-                                  icon: Icon(Icons.edit_calendar_outlined),
+                                  icon: Icon(
+                                    Icons.edit_calendar_outlined,
+                                    color: stroke,
+                                  ),
                                 ),
                         ],
                       ),
@@ -515,6 +556,7 @@ class MainScreen extends ConsumerWidget {
                         locale: 'ja_JP',
                         headerVisible: false,
                         sixWeekMonthsEnforced: true,
+                        pageJumpingEnabled: true,
                         rowHeight: areaHeight * 0.08,
                         selectedDayPredicate: (day) =>
                             isSameDay(_selectedDay, day),
@@ -539,16 +581,18 @@ class MainScreen extends ConsumerWidget {
                                 border: (_myEvents.containsKey(DateTime.utc(
                                         day.year, day.month, day.day)))
                                     ? Border.all(
-                                        color: Colors.black26,
+                                        color: stroke.withOpacity(0.4),
+                                        // Colors.black26,
                                         width: 0.8,
                                         style: BorderStyle.solid,
                                       )
                                     : Border.all(
-                                        color: Color(0xffa6d1c4),
+                                        color: stroke.withOpacity(0.7),
+                                        // Color(0xffa6d1c4),
                                         width: 1.5,
                                         style: BorderStyle.solid,
                                       ),
-                                color: Colors.white,
+                                color: main,
                                 borderRadius: BorderRadius.circular(10.0),
                               ),
                               child: Column(
@@ -561,8 +605,10 @@ class MainScreen extends ConsumerWidget {
                                       color: (_myEvents.containsKey(
                                               DateTime.utc(day.year, day.month,
                                                   day.day)))
-                                          ? Colors.black38
-                                          : Colors.black87,
+                                          // ? Colors.black38
+                                          // : Colors.black87,
+                                          ? stroke.withOpacity(0.6)
+                                          : stroke,
                                     ),
                                   ),
                                   _buildEventMaker(ref, day),
@@ -581,30 +627,28 @@ class MainScreen extends ConsumerWidget {
                                     ? (_myEvents.containsKey(DateTime.utc(
                                             day.year, day.month, day.day)))
                                         ? Border.all(
-                                            color: Colors.black26,
+                                            color: stroke.withOpacity(0.4),
                                             width: 0.8,
                                             style: BorderStyle.solid,
                                           )
                                         : Border.all(
-                                            color: Color(0xffa6d1c4),
+                                            color: stroke.withOpacity(0.7),
                                             width: 1.5,
                                             style: BorderStyle.solid,
                                           )
                                     : (_myEvents.containsKey(DateTime.utc(
                                             day.year, day.month, day.day)))
                                         ? Border.all(
-                                            color: Colors.black45,
+                                            color: stroke.withOpacity(0.4),
                                             width: 2.5,
                                             style: BorderStyle.solid,
                                           )
                                         : Border.all(
-                                            color: Color(0xffa6d1c4),
-                                            width: 3.0,
+                                            color: stroke.withOpacity(0.7),
+                                            width: 2.5,
                                             style: BorderStyle.solid,
                                           ),
-                                color: (_editmode)
-                                    ? Colors.white
-                                    : Color(0xfffcdc12),
+                                color: (_editmode) ? main : tertiary,
                                 borderRadius: BorderRadius.circular(10.0),
                               ),
                               child: Column(
@@ -614,11 +658,7 @@ class MainScreen extends ConsumerWidget {
                                     day.day.toString(),
                                     style: TextStyle(
                                       fontSize: 16.0,
-                                      color: (_myEvents.containsKey(
-                                              DateTime.utc(day.year, day.month,
-                                                  day.day)))
-                                          ? Colors.black87
-                                          : Colors.black87,
+                                      color: stroke,
                                     ),
                                   ),
                                   _buildEventMaker(ref, day),
@@ -631,19 +671,21 @@ class MainScreen extends ConsumerWidget {
                               margin: EdgeInsets.all(3.0),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                border: (_myEvents.containsKey(DateTime.utc(
-                                        day.year, day.month, day.day)))
-                                    ? Border.all(
-                                        color: Colors.black26,
-                                        width: 0.8,
-                                        style: BorderStyle.solid,
-                                      )
-                                    : Border.all(
-                                        color: Color(0xffa6d1c4),
-                                        width: 1.5,
-                                        style: BorderStyle.solid,
-                                      ),
-                                color: Color(0xfffcdc12).withOpacity(0.4),
+                                border: (focusedDay.month == day.month)
+                                    ? (_myEvents.containsKey(DateTime.utc(
+                                            day.year, day.month, day.day)))
+                                        ? Border.all(
+                                            color: stroke.withOpacity(0.4),
+                                            width: 0.8,
+                                            style: BorderStyle.solid,
+                                          )
+                                        : Border.all(
+                                            color: stroke.withOpacity(0.7),
+                                            width: 1.5,
+                                            style: BorderStyle.solid,
+                                          )
+                                    : null,
+                                color: tertiary.withOpacity(0.6),
                                 borderRadius: BorderRadius.circular(10.0),
                               ),
                               child: Column(
@@ -654,13 +696,16 @@ class MainScreen extends ConsumerWidget {
                                     style: TextStyle(
                                       fontSize: 16.0,
                                       color: (_myEvents.containsKey(
-                                              DateTime.utc(day.year, day.month,
-                                                  day.day)))
-                                          ? Colors.black38
-                                          : Colors.black87,
+                                                  DateTime.utc(day.year,
+                                                      day.month, day.day)) ||
+                                              (focusedDay.month != day.month))
+                                          ? stroke.withOpacity(0.6)
+                                          : stroke,
                                     ),
                                   ),
-                                  _buildEventMaker(ref, day),
+                                  (focusedDay.month == day.month)
+                                      ? _buildEventMaker(ref, day)
+                                      : SizedBox.shrink(),
                                 ],
                               ),
                             );
@@ -670,7 +715,7 @@ class MainScreen extends ConsumerWidget {
                               margin: EdgeInsets.all(3.0),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: main,
                                 borderRadius: BorderRadius.circular(10.0),
                               ),
                               child: Column(
@@ -680,7 +725,7 @@ class MainScreen extends ConsumerWidget {
                                     day.day.toString(),
                                     style: TextStyle(
                                       fontSize: 16.0,
-                                      color: Colors.black38,
+                                      color: stroke.withOpacity(0.4),
                                     ),
                                   ),
                                 ],
@@ -715,7 +760,6 @@ class MainScreen extends ConsumerWidget {
                               .clamp(0.0, 1.0),
                           child: Column(
                             children: [
-                              // Container(height: areaHeight * 0.05, color: Colors.blue),
                               SizedBox(height: areaHeight * 0.05),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -724,6 +768,7 @@ class MainScreen extends ConsumerWidget {
                                     "Users state",
                                     style: TextStyle(
                                       fontSize: 18.0,
+                                      color: stroke,
                                     ),
                                   ),
                                 ],
@@ -741,22 +786,33 @@ class MainScreen extends ConsumerWidget {
                                       ),
                                       child: ColorFiltered(
                                         colorFilter: ColorFilter.mode(
-                                          (_friendsEvents[
-                                                      _friendsInformation[index]
-                                                          .id]!
-                                                  .containsKey(DateTime.utc(
-                                                      _focusedDay.year,
-                                                      _focusedDay.month,
-                                                      _focusedDay.day)))
-                                              ? Colors.white.withOpacity(0.6)
-                                              : Colors.white.withOpacity(0.0),
+                                          (index == 0)
+                                              ? (_myEvents.containsKey(
+                                                      DateTime.utc(
+                                                          _focusedDay.year,
+                                                          _focusedDay.month,
+                                                          _focusedDay.day)))
+                                                  ? main.withOpacity(0.6)
+                                                  : main.withOpacity(0.0)
+                                              : (_friendsEvents[
+                                                          _friendsInformation[
+                                                                  index - 1]
+                                                              .id]!
+                                                      .containsKey(DateTime.utc(
+                                                          _focusedDay.year,
+                                                          _focusedDay.month,
+                                                          _focusedDay.day)))
+                                                  ? main.withOpacity(0.6)
+                                                  : main.withOpacity(0.0),
                                           BlendMode.srcATop,
                                         ),
                                         child: CircleAvatar(
                                           radius: areaHeight * 0.03,
-                                          backgroundColor: Colors.white,
+                                          backgroundColor: main,
                                           backgroundImage: NetworkImage(
-                                            '${_friendsInformation[index].imageUrl}',
+                                            (index == 0)
+                                                ? '${_myInformation.imageUrl}'
+                                                : '${_friendsInformation[index - 1].imageUrl}',
                                           ),
                                         ),
                                       ),

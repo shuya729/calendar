@@ -52,8 +52,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'freindLidt': [],
             'eventMap': {},
           }).then((value) {
-            Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => MainScreen()));
+            FirebaseAuth.instance.authStateChanges().listen((user) {
+              if (user == null) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => super.widget,
+                  ),
+                );
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const MainScreen(),
+                  ),
+                );
+              }
+            });
           });
         });
       });

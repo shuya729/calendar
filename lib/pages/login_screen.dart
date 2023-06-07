@@ -100,11 +100,24 @@ class _LoginScreenState extends State<LoginScreen> {
                               password: password,
                             )
                                 .whenComplete(() {
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (context) => const MainScreen(),
-                                ),
-                              );
+                              FirebaseAuth.instance
+                                  .authStateChanges()
+                                  .listen((user) {
+                                if (user == null) {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SignupScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) => const MainScreen(),
+                                    ),
+                                  );
+                                }
+                              });
                             });
                           } on FirebaseAuthException catch (e) {
                             if (e.code == 'user-not-found') {

@@ -4,22 +4,23 @@ class UserData {
   final String id;
   final String name;
   final String imageUrl;
-  final List<String> freindLidt;
+  final List<String?> friendList;
 
   UserData({
     required this.id,
     required this.name,
     required this.imageUrl,
-    required this.freindLidt,
+    required this.friendList,
   });
 
   factory UserData.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data() as Map<String, dynamic>;
     return UserData(
-      id: data['id'],
-      name: data['name'],
-      imageUrl: data['imageUrl'],
-      freindLidt: data['freindLidt'],
+      id: data['id'] ?? '',
+      name: data['name'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      friendList:
+          data['friendList'] is Iterable ? List.from(data['friendList']) : [],
     );
   }
 
@@ -28,7 +29,16 @@ class UserData {
       id: user.id,
       name: user.name,
       imageUrl: user.imageUrl,
-      freindLidt: user.freindLidt,
+      friendList: user.friendList,
+    );
+  }
+
+  UserData empty() {
+    return UserData(
+      id: '',
+      name: '',
+      imageUrl: '',
+      friendList: [],
     );
   }
 }

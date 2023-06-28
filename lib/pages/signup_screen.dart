@@ -1,16 +1,18 @@
+import 'package:calendar/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'profile_screen.dart';
 
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({Key? key}) : super(key: key);
+class SignupScreen extends ConsumerStatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  _SignupScreenState createState() => _SignupScreenState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   String email = '';
   String password = '';
   String confirmPassword = '';
@@ -143,11 +145,26 @@ class _SignupScreenState extends State<SignupScreen> {
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               try {
-                                final credential = await FirebaseAuth.instance
+                                await FirebaseAuth.instance
                                     .createUserWithEmailAndPassword(
                                   email: email,
                                   password: password,
-                                );
+                                )
+                                    .whenComplete(() {
+                                  final user =
+                                      FirebaseAuth.instance.currentUser;
+                                  if (user != null) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => ProfileScreen(
+                                          user: user,
+                                          email: email,
+                                          password: password,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                });
                               } on FirebaseAuthException catch (e) {
                                 if (e.code == 'weak-password') {
                                   print('The password provided is too weak.');
@@ -158,19 +175,6 @@ class _SignupScreenState extends State<SignupScreen> {
                               } catch (e) {
                                 print(e);
                               }
-                              FirebaseAuth.instance
-                                  .authStateChanges()
-                                  .listen((user) {
-                                if (user != null) {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => ProfileScreen(
-                                        user: user,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              });
                             }
                           },
                           child: const Text('次へ'),

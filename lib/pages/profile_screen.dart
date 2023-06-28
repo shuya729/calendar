@@ -5,24 +5,31 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../main.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, required this.user});
+class ProfileScreen extends ConsumerStatefulWidget {
+  const ProfileScreen(
+      {super.key,
+      required this.user,
+      required this.email,
+      required this.password});
 
   final User user;
+  final String email;
+  final String password;
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   File? image;
   String? name;
 
-  Future pickImage() async {
+  Future<void> pickImage() async {
     try {
       final image = await ImagePicker().pickImage(source: ImageSource.gallery);
       // 画像がnullの場合戻る
@@ -30,7 +37,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final imageTemp = File(image.path);
 
-      setState(() => this.image = imageTemp);
+      setState(() {
+        this.image = imageTemp;
+      });
     } on PlatformException catch (e) {
       print('Failed to pick image: $e');
     }
@@ -38,40 +47,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future signUp() async {
     final storageRef = FirebaseStorage.instance.ref();
-    final uploadRef = storageRef
-        .child('users/${widget.user.uid}/${image!.path.split('/').last}');
+    final path = 'users/${widget.user.uid}/${image!.path.split('/').last}';
     final firestore = FirebaseFirestore.instance;
 
     try {
-      await uploadRef.putFile(image!).then((taskSnapshot) async {
-        await taskSnapshot.ref.getDownloadURL().then((imageUrl) {
-          firestore.collection('users').doc(widget.user.uid).set({
-            'id': widget.user.uid,
-            'name': name,
-            'imageUrl': imageUrl,
-            'freindLidt': [],
-            'eventMap': {},
-          }).then((value) {
-            FirebaseAuth.instance.authStateChanges().listen((user) {
-              if (user == null) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => super.widget,
-                  ),
-                );
-              } else {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const MainScreen(),
-                  ),
-                );
-              }
-            });
-          });
-        });
-      });
+      await image!.readAsBytes().then(
+            (data) async => await storageRef.child(path).putData(data).then(
+                  (taskSnapshot) async =>
+                      await taskSnapshot.ref.getDownloadURL().then((imageUrl) {
+                    final List<String> friendList = [];
+                    firestore.collection('users').doc(widget.user.uid).set({
+                      'id': widget.user.uid,
+                      'name': name,
+                      'imageUrl': imageUrl,
+                      'friendLidt': friendList,
+                    }).whenComplete(
+                      () async => await firestore
+                          .collection('events')
+                          .doc(widget.user.uid)
+                          .set({}).whenComplete(
+                        () => Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => const MyApp(),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+          );
     } catch (e) {
       print('Failed to upload: $e');
+      await widget.user.delete();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const MyApp(),
+        ),
+      );
     }
   }
 
@@ -125,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           });
                         },
                       ),
-                      SizedBox(height: 20),
+                      SizedBox(height: 40),
                       Text("プロフィール写真を選択"),
                       const SizedBox(height: 10),
                       GestureDetector(

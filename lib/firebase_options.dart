@@ -63,12 +63,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBLjR0J24PvUAOTwM0hnD-KJYwI4hhQe00',
-    appId: '1:106532290243:ios:e2e09d5b2ba202bec7ac76',
+    appId: '1:106532290243:ios:dd1ab9bf78ba9560c7ac76',
     messagingSenderId: '106532290243',
     projectId: 'calendar-2b2e8',
     storageBucket: 'calendar-2b2e8.appspot.com',
-    iosClientId: '106532290243-qc1ihukn4ej7dj7r5tpoo1sj7emumuuf.apps.googleusercontent.com',
-    iosBundleId: 'com.example.calendar',
+    iosClientId: '106532290243-i8i281pksj51bido8h3fjmv1djjkaa3k.apps.googleusercontent.com',
+    iosBundleId: 'example.myapp.calendar',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

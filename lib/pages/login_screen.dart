@@ -1,42 +1,45 @@
-import 'package:calendar/pages/signup_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../main.dart';
+import '../pages/signup_screen.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   String email = '';
   String password = '';
   bool hidePassword = true;
 
   @override
   Widget build(BuildContext context) {
+    const Color main = Color(0xfffffffe);
+    const Color highLight = Color(0xff00ebc7);
+    const Color secondary = Color(0xffff5470);
     final double areaHeight = MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
     return Scaffold(
+      backgroundColor: secondary,
       body: SafeArea(
         child: Stack(
           fit: StackFit.expand,
           children: [
             Container(
-              color: Color(0xffa6d1c4),
+              color: secondary,
             ),
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                height: areaHeight * 0.85,
+                height: areaHeight * 0.92,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 decoration: ShapeDecoration(
-                  color: Colors.white,
+                  color: main,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.only(
                       topRight: Radius.circular(areaHeight * 0.05),

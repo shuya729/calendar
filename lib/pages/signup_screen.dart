@@ -1,17 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'profile_screen.dart';
 
-class SignupScreen extends ConsumerStatefulWidget {
+class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _SignupScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends ConsumerState<SignupScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   String email = '';
   String password = '';
   String confirmPassword = '';
@@ -20,6 +19,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const Color main = Color(0xfffffffe);
+    const Color highLight = Color(0xff00ebc7);
+    const Color secondary = Color(0xffff5470);
     final double areaHeight = MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
@@ -29,15 +31,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           fit: StackFit.expand,
           children: [
             Container(
-              color: Color(0xffa6d1c4),
+              color: secondary,
             ),
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                height: areaHeight * 0.85,
+                height: areaHeight * 0.92,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 decoration: ShapeDecoration(
-                  color: Colors.white,
+                  color: main,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.only(
                       topRight: Radius.circular(areaHeight * 0.05),

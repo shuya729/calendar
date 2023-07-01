@@ -1,8 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:calendar/pages/add_friend_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -11,7 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import 'models/user_model.dart';
+import 'pages/loading_screen.dart';
 import 'pages/login_screen.dart';
+import 'pages/my_account_screen.dart';
+import '../pages/add_friend_screen.dart';
+import 'providers/other_providers.dart';
+import 'providers/userdata_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,90 +67,6 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
-
-final authProvider =
-    StreamProvider<User?>((ref) => FirebaseAuth.instance.authStateChanges());
-final myInformationProvider = StreamProvider<UserData>((ref) {
-  final auth = ref.watch(authProvider);
-  final authUser = auth.asData!.value;
-  final stream = FirebaseFirestore.instance
-      .collection('users')
-      .doc(authUser!.uid)
-      .snapshots();
-  return stream.map((snapshot) => UserData.fromFirestore(snapshot));
-});
-final myEventsProvider = StreamProvider<Map<DateTime, dynamic>>((ref) {
-  final auth = ref.watch(authProvider);
-  final authUser = auth.asData!.value;
-  final stream = FirebaseFirestore.instance
-      .collection('events')
-      .doc(authUser!.uid)
-      .snapshots();
-  return stream.map((snapshot) => Map.fromIterables(
-        Iterable.generate(snapshot.data()!.length, (index) {
-          final key = snapshot.data()!.keys.elementAt(index);
-          final year = int.parse(key.split('_')[0]);
-          final month = int.parse(key.split('_')[1]);
-          final day = int.parse(key.split('_')[2]);
-          return DateTime.utc(year, month, day);
-        }),
-        snapshot.data()!.values,
-      ));
-});
-final friendsInformationsProvider = FutureProvider<List<UserData>>((ref) async {
-  final friendList = ref.watch(myInformationProvider).asData!.value.friendList;
-  if (friendList.isEmpty) {
-    return [];
-  } else {
-    final collection = FirebaseFirestore.instance.collection('users');
-    final querySnapshot =
-        await collection.where('id', whereIn: friendList).get();
-    return querySnapshot.docs
-        .map((doc) => UserData.fromFirestore(doc))
-        .toList();
-  }
-});
-final friendsEventsProvider =
-    FutureProvider<List<Map<DateTime, dynamic>>>((ref) async {
-  final friendList = ref.watch(myInformationProvider).asData!.value.friendList;
-  if (friendList.isEmpty) {
-    return [];
-  } else {
-    final collection = FirebaseFirestore.instance.collection('events');
-    final querySnapshot =
-        await collection.where(FieldPath.documentId, whereIn: friendList).get();
-    return querySnapshot.docs
-        .map(
-          (snapshot) => Map.fromIterables(
-            Iterable.generate(snapshot.data().length, (index) {
-              final key = snapshot.data().keys.elementAt(index);
-              final year = int.parse(key.split('_')[0]);
-              final month = int.parse(key.split('_')[1]);
-              final day = int.parse(key.split('_')[2]);
-              return DateTime.utc(year, month, day);
-            }),
-            snapshot.data().values,
-          ),
-        )
-        .toList();
-  }
-});
-
-final scrollControllerProvider =
-    Provider.autoDispose<ScrollController>((ref) => ScrollController());
-final deltaPositionProvider = StateProvider.autoDispose<double>((ref) => 0.0);
-final focusedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
-final selectedDayProvider = StateProvider<DateTime?>((ref) => null);
-final editmodeProvider = StateProvider<bool>((ref) => false);
-final selectedIndexProvider = StateProvider.autoDispose<int>((ref) => 0);
-final focusedFriendsEventsProvider =
-    StateProvider<List<Map<DateTime, dynamic>>>((ref) {
-  final friendsEvents = ref.watch(friendsEventsProvider);
-  return friendsEvents.when(
-      data: (data) => data,
-      error: (error, stackTrace) => [],
-      loading: () => []);
-});
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
@@ -268,6 +188,8 @@ class MainScreen extends ConsumerWidget {
     const Color secondary = Color(0xffff5470);
     const Color tertiary = Color(0xfffde24f);
 
+    // final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
     final double areaHeight = MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
@@ -294,6 +216,7 @@ class MainScreen extends ConsumerWidget {
         ref.watch(friendsEventsProvider).asData!.value;
 
     return Scaffold(
+      // key: scaffoldKey,
       backgroundColor: secondary,
       body: SafeArea(
         child: Stack(
@@ -305,50 +228,49 @@ class MainScreen extends ConsumerWidget {
                 physics: const ClampingScrollPhysics(),
                 controller: scrollController,
                 slivers: <Widget>[
-                  SliverToBoxAdapter(
-                    child: Container(
-                      height: areaHeight * 0.07,
-                      padding: EdgeInsets.only(left: 7),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
+                  SliverAppBar(
+                    backgroundColor: secondary,
+                    foregroundColor: stroke,
+                    expandedHeight: areaHeight * 0.07,
+                    toolbarHeight: areaHeight * 0.07,
+                    titleSpacing: 0.0,
+                    floating: true,
+                    snap: true,
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(
                             'ロゴ',
                             style: TextStyle(
                               fontSize: 22.5,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            AddFriendScreen()),
-                                  );
-                                },
-                                icon: Icon(Icons.person_add),
-                                iconSize: 22.5,
-                              ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: Icon(Icons.notifications),
-                                iconSize: 22.5,
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  FirebaseAuth.instance.signOut();
-                                },
-                                icon: Icon(Icons.settings),
-                                iconSize: 22.5,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => AddFriendScreen(),
+                                  ),
+                                );
+                              },
+                              icon: Icon(Icons.person_add),
+                              iconSize: 22.5,
+                            ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: Icon(Icons.notifications),
+                              iconSize: 22.5,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   SliverList(
@@ -411,11 +333,24 @@ class MainScreen extends ConsumerWidget {
                                         ),
                                 ],
                               ),
-                              IconButton(
+                              PopupMenuButton(
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    child: Text('プロック'),
+                                    onTap: () {},
+                                  ),
+                                  PopupMenuItem(
+                                    child: Text('フレンド解除'),
+                                    onTap: () {},
+                                  ),
+                                ],
                                 icon: Icon(Icons.more_vert),
-                                color: stroke,
-                                onPressed: () {},
                               ),
+                              // IconButton(
+                              //   icon:
+                              //   color: stroke,
+                              //   onPressed: () {},
+                              // ),
                             ],
                           ),
                         ),
@@ -449,7 +384,7 @@ class MainScreen extends ConsumerWidget {
                 },
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                    vertical: areaHeight * 0.005,
+                    vertical: areaHeight * 0.01,
                     horizontal: areaWidth * 0.05,
                   ),
                   decoration: ShapeDecoration(
@@ -506,6 +441,14 @@ class MainScreen extends ConsumerWidget {
                           leftChevronVisible: false,
                           rightChevronVisible: false,
                           headerPadding: EdgeInsets.all(0),
+                          titleTextStyle: TextStyle(),
+                          // decoration: BoxDecoration(color: Colors.blue),
+                        ),
+                        daysOfWeekStyle: DaysOfWeekStyle(
+                          weekdayStyle: TextStyle(
+                            color: stroke,
+                            fontSize: 13,
+                          ),
                         ),
                         calendarBuilders: CalendarBuilders(
                           headerTitleBuilder: (context, day) {
@@ -513,16 +456,20 @@ class MainScreen extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  "${day.year}年${day.month}月",
-                                  style: TextStyle(
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.normal,
-                                    color: stroke,
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4.0),
+                                  child: Text(
+                                    "${day.year}年${day.month}月",
+                                    style: TextStyle(
+                                      fontSize: 18.0,
+                                      fontWeight: FontWeight.normal,
+                                      color: stroke,
+                                    ),
                                   ),
                                 ),
                                 (editmode)
                                     ? IconButton(
+                                        visualDensity: VisualDensity.compact,
                                         onPressed: () {
                                           ref
                                               .read(editmodeProvider.notifier)
@@ -535,6 +482,7 @@ class MainScreen extends ConsumerWidget {
                                         ),
                                       )
                                     : IconButton(
+                                        visualDensity: VisualDensity.compact,
                                         onPressed: () {
                                           ref
                                               .read(editmodeProvider.notifier)
@@ -548,6 +496,30 @@ class MainScreen extends ConsumerWidget {
                                       ),
                               ],
                             );
+                          },
+                          dowBuilder: (_, day) {
+                            if (day.weekday == DateTime.sunday) {
+                              return const Center(
+                                child: Text(
+                                  "日",
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              );
+                            } else if (day.weekday == DateTime.saturday) {
+                              return const Center(
+                                child: Text(
+                                  "土",
+                                  style: TextStyle(
+                                    color: Colors.blue,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              );
+                            }
+                            return null;
                           },
                           defaultBuilder: (context, day, focusedDay) {
                             return (editmode)
@@ -790,33 +762,8 @@ class MainScreen extends ConsumerWidget {
                               ),
                             );
                           },
-                          dowBuilder: (_, day) {
-                            if (day.weekday == DateTime.sunday) {
-                              return const Center(
-                                child: Text(
-                                  "日",
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              );
-                            } else if (day.weekday == DateTime.saturday) {
-                              return const Center(
-                                child: Text(
-                                  "土",
-                                  style: TextStyle(color: Colors.blue),
-                                ),
-                              );
-                            }
-                            return null;
-                          },
                         ),
                       ),
-                      // Offstage(
-                      //   offstage: ((areaHeight * 0.05) - deltaPosition) < 0,
-                      //   child: Opacity(
-                      //     opacity: (((areaHeight * 0.05) - deltaPosition) /
-                      //             (areaHeight * 0.05))
-                      //         .clamp(0.0, 1.0),
-                      //     child:
                       Column(
                         children: [
                           SizedBox(height: areaHeight * 0.05),
@@ -885,8 +832,6 @@ class MainScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
@@ -895,57 +840,99 @@ class MainScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class LoadingWidget extends StatelessWidget {
-  const LoadingWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final double areaHeight = MediaQuery.of(context).size.height -
-        MediaQuery.of(context).padding.top -
-        MediaQuery.of(context).padding.bottom;
-
-    return Scaffold(
-      backgroundColor: const Color(0xffff5470),
-      body: SafeArea(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Container(
-              color: const Color(0xffff5470),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: areaHeight * 0.85,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                decoration: ShapeDecoration(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(areaHeight * 0.05),
-                      topLeft: Radius.circular(areaHeight * 0.05),
-                    ),
-                  ),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Expanded(
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                    ],
+      endDrawer: Drawer(
+        child: Container(
+          color: main,
+          child: Column(
+            children: [
+              SizedBox(height: 40),
+              Center(
+                child: Text(
+                  '設定',
+                  style: TextStyle(
+                    color: stroke,
+                    fontSize: 20,
                   ),
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: 40),
+              ListView(
+                shrinkWrap: true,
+                children: [
+                  ListTile(
+                    title: const Text('プロフィール'),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              MyAccountScreen(myInformation: myInformation),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('ログアウト'),
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const MyApp(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('退会'),
+                    onTap: () async {
+                      await showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('退会しますか？'),
+                            actions: [
+                              TextButton(
+                                child: Text('キャンセル'),
+                                onPressed: () {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) => const MyApp(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              TextButton(
+                                child: Text('退会'),
+                                onPressed: () async {
+                                  await FirebaseFirestore.instance
+                                      .collection('events')
+                                      .doc(myInformation.id)
+                                      .delete();
+                                  await FirebaseStorage.instance
+                                      .ref('users/${myInformation.id}')
+                                      .delete();
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(myInformation.id)
+                                      .delete();
+                                  await FirebaseAuth.instance.currentUser!
+                                      .delete();
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) => const MyApp(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );

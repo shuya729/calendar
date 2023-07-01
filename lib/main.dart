@@ -14,6 +14,7 @@ import 'pages/loading_screen.dart';
 import 'pages/login_screen.dart';
 import 'pages/my_account_screen.dart';
 import '../pages/add_friend_screen.dart';
+import 'providers/focused_friends_providers.dart';
 import 'providers/other_providers.dart';
 import 'providers/userdata_providers.dart';
 
@@ -38,7 +39,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.pink,
+        primarySwatch: Colors.green,
       ),
       home: (ref.watch(authProvider).value == null)
           ? const LoginScreen()
@@ -76,26 +77,29 @@ class MainScreen extends ConsumerWidget {
     Map<DateTime, dynamic> myEvents,
     List<Map<DateTime, dynamic>> focusedFriendsEvents,
   ) {
+    const Color onMain = Color(0xfffffffe);
+    const Color strictMain = Color(0xFF748473);
+
     int numbersFriendsEvent = focusedFriendsEvents.length;
+
     for (var value in focusedFriendsEvents) {
       if (value.containsKey(DateTime.utc(day.year, day.month, day.day))) {
         numbersFriendsEvent--;
       }
     }
     final Widget eventMaker = Container(
-      margin: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 3.0),
-      height: 9,
-      width: 9,
+      height: 7,
+      width: 7,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color:
             (myEvents.containsKey(DateTime.utc(day.year, day.month, day.day)))
-                ? const Color(0xff00214d).withOpacity(0.2)
-                : const Color(0xff00ebc7).withOpacity(0.3),
+                ? onMain.withOpacity(0.3)
+                : onMain.withOpacity(0.7),
       ),
     );
     if (numbersFriendsEvent == 0) {
-      return const SizedBox(height: 18);
+      return const SizedBox(height: 17);
     } else if (numbersFriendsEvent == 1) {
       return SizedBox(
         height: 18,
@@ -110,7 +114,7 @@ class MainScreen extends ConsumerWidget {
       );
     } else if (numbersFriendsEvent == 2) {
       return SizedBox(
-        height: 18,
+        height: 17,
         child: Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -123,7 +127,7 @@ class MainScreen extends ConsumerWidget {
       );
     } else if (numbersFriendsEvent == 3) {
       return SizedBox(
-        height: 18,
+        height: 17,
         child: Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -137,24 +141,24 @@ class MainScreen extends ConsumerWidget {
       );
     } else {
       return Container(
-        height: 18,
-        width: 18,
+        height: 17,
+        width: 17,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color:
               (myEvents.containsKey(DateTime.utc(day.year, day.month, day.day)))
-                  ? const Color(0xff00214d).withOpacity(0.2)
-                  : const Color(0xff00ebc7).withOpacity(0.3),
+                  ? onMain.withOpacity(0.3)
+                  : onMain.withOpacity(0.7),
         ),
         child: Center(
           child: Text(
             "$numbersFriendsEvent",
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: (myEvents
                       .containsKey(DateTime.utc(day.year, day.month, day.day)))
-                  ? const Color(0xfffffffe)
-                  : const Color(0xff00214d).withOpacity(0.8),
+                  ? strictMain
+                  : strictMain,
             ),
           ),
         ),
@@ -182,13 +186,12 @@ class MainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const Color stroke = Color(0xff00214d);
-    const Color main = Color(0xfffffffe);
-    const Color highLight = Color(0xff00ebc7);
-    const Color secondary = Color(0xffff5470);
-    const Color tertiary = Color(0xfffde24f);
-
-    // final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+    const Color main = Color(0xff96ab94);
+    const Color onMain = Color(0xfffffffe);
+    const Color strictMain = Color(0xFF748473);
+    const Color secondary = Color(0xfffffffe);
+    const Color onSecondary = Color(0xff00214d);
+    const Color tertiary = Color(0xff614a51);
 
     final double areaHeight = MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
@@ -196,16 +199,18 @@ class MainScreen extends ConsumerWidget {
     final double areaWidth = MediaQuery.of(context).size.width -
         MediaQuery.of(context).padding.left -
         MediaQuery.of(context).padding.right;
-    final ScrollController scrollController =
-        ref.watch(scrollControllerProvider);
-    final double deltaPosition = ref.watch(deltaPositionProvider);
+
+    final double deltaTop = ref.watch(deltaTopProvider);
+    final double deltaBottom = ref.watch(deltaBottomProvider);
     final DateTime focusedDay = ref.watch(focusedDayProvider);
     final DateTime? selectedDay = ref.watch(selectedDayProvider);
     final bool editmode = ref.watch(editmodeProvider);
     final List<Map<DateTime, dynamic>> focusedFriendsEvents =
         ref.watch(focusedFriendsEventsProvider);
+    final List<UserData> focusedFriendsInformations =
+        ref.watch(focusedFriendsInformationsProvider);
+    final scaffoldKey = ref.watch(scaffoldKeyProvider);
 
-    final int selectedIndex = ref.watch(selectedIndexProvider);
     final UserData myInformation =
         ref.watch(myInformationProvider).asData!.value;
     final List<UserData> friendsInformations =
@@ -216,369 +221,235 @@ class MainScreen extends ConsumerWidget {
         ref.watch(friendsEventsProvider).asData!.value;
 
     return Scaffold(
-      // key: scaffoldKey,
+      key: scaffoldKey,
       backgroundColor: secondary,
       body: SafeArea(
         child: Stack(
           fit: StackFit.expand,
           children: [
             Container(
-              color: secondary,
-              child: CustomScrollView(
-                physics: const ClampingScrollPhysics(),
-                controller: scrollController,
-                slivers: <Widget>[
-                  SliverAppBar(
-                    backgroundColor: secondary,
-                    foregroundColor: stroke,
-                    expandedHeight: areaHeight * 0.07,
-                    toolbarHeight: areaHeight * 0.07,
-                    titleSpacing: 0.0,
-                    floating: true,
-                    snap: true,
-                    title: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(
-                            'ロゴ',
-                            style: TextStyle(
-                              fontSize: 22.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => AddFriendScreen(),
-                                  ),
-                                );
-                              },
-                              icon: Icon(Icons.person_add),
-                              iconSize: 22.5,
-                            ),
-                            IconButton(
-                              onPressed: () {},
-                              icon: Icon(Icons.notifications),
-                              iconSize: 22.5,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      childCount: friendsInformations.length + 1,
-                      (context, index) => GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          ref.read(selectedIndexProvider.notifier).state =
-                              index;
-                          scrollController.jumpTo(
-                            areaHeight * 0.07 + areaHeight * 0.08 * index,
+              color: main,
+              child: Column(
+                children: [
+                  SizedBox(height: areaHeight * 0.1),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 15.0),
+                    child: TableCalendar(
+                      firstDay: DateTime.utc(2022, 6, 1),
+                      lastDay: DateTime.utc(2024, 6, 1),
+                      focusedDay: focusedDay,
+                      calendarFormat: CalendarFormat.month,
+                      locale: 'ja_JP',
+                      sixWeekMonthsEnforced: true,
+                      pageJumpingEnabled: true,
+                      rowHeight: areaHeight * 0.07,
+                      selectedDayPredicate: (day) {
+                        return isSameDay(selectedDay, day);
+                      },
+                      onDaySelected: (onSelectedDay, onFocusedDay) {
+                        if (!editmode) {
+                          if (!isSameDay(selectedDay, onSelectedDay)) {
+                            ref.read(selectedDayProvider.notifier).state =
+                                onSelectedDay;
+                            ref.read(focusedDayProvider.notifier).state =
+                                onFocusedDay;
+                          }
+                        }
+                        if (editmode == true) {
+                          _changeTheDayState(
+                            focusedDay,
+                            myInformation,
+                            myEvents,
                           );
-                          ref.read(deltaPositionProvider.notifier).state =
-                              areaHeight * 0.37;
-                          (index == 0)
-                              ? ref
-                                  .read(focusedFriendsEventsProvider.notifier)
-                                  .state = [...friendsEvents]
-                              : ref
-                                  .read(focusedFriendsEventsProvider.notifier)
-                                  .state = [friendsEvents[index - 1]];
-                        },
-                        child: Container(
-                          height: areaHeight * 0.08,
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Row(
+                        }
+                      },
+                      headerStyle: const HeaderStyle(
+                        formatButtonVisible: false,
+                        formatButtonShowsNext: false,
+                        leftChevronVisible: false,
+                        rightChevronVisible: false,
+                        headerPadding: EdgeInsets.only(
+                          top: 10,
+                          bottom: 5,
+                          left: 4,
+                          right: 4,
+                        ),
+                        titleTextStyle: TextStyle(),
+                      ),
+                      daysOfWeekStyle: DaysOfWeekStyle(
+                        weekdayStyle: TextStyle(
+                          color: onMain,
+                          fontSize: 12,
+                        ),
+                        weekendStyle: TextStyle(
+                          color: onMain,
+                          fontSize: 12,
+                        ),
+                      ),
+                      calendarBuilders: CalendarBuilders(
+                        headerTitleBuilder: (context, day) {
+                          return Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
+                              Column(
                                 children: [
-                                  CircleAvatar(
-                                    radius: areaHeight * 0.03,
-                                    backgroundImage: CachedNetworkImageProvider(
-                                      (index == 0)
-                                          ? myInformation.imageUrl
-                                          : friendsInformations[index - 1]
-                                              .imageUrl,
-                                    ),
-                                  ),
-                                  SizedBox(width: areaWidth * 0.02),
-                                  (index == 0)
-                                      ? Text(
-                                          'マイページ',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: stroke,
-                                          ),
-                                        )
-                                      : Text(
-                                          friendsInformations[index - 1].name,
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: stroke,
-                                          ),
-                                        ),
-                                ],
-                              ),
-                              PopupMenuButton(
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    child: Text('プロック'),
-                                    onTap: () {},
-                                  ),
-                                  PopupMenuItem(
-                                    child: Text('フレンド解除'),
-                                    onTap: () {},
-                                  ),
-                                ],
-                                icon: Icon(Icons.more_vert),
-                              ),
-                              // IconButton(
-                              //   icon:
-                              //   color: stroke,
-                              //   onPressed: () {},
-                              // ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // SliverToBoxAdapter(),
-                  SliverFillRemaining(),
-                ],
-              ),
-            ),
-            Positioned(
-              width: areaWidth,
-              bottom: -areaHeight * 0.37,
-              height: areaHeight * 0.92 +
-                  deltaPosition.clamp(areaHeight * 0.0, areaHeight * 0.37),
-              // alignment: Alignment.bottomCenter,
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onVerticalDragUpdate: (details) {
-                  ref.read(deltaPositionProvider.notifier).state -=
-                      details.delta.dy;
-                },
-                onVerticalDragEnd: (details) {
-                  if (deltaPosition < areaHeight * 0.185) {
-                    ref.read(deltaPositionProvider.notifier).state = 0;
-                  } else {
-                    ref.read(deltaPositionProvider.notifier).state =
-                        areaHeight * 0.37;
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: areaHeight * 0.01,
-                    horizontal: areaWidth * 0.05,
-                  ),
-                  decoration: ShapeDecoration(
-                    color: main,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(areaHeight * 0.05),
-                        topLeft: Radius.circular(areaHeight * 0.05),
-                      ),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: stroke.withOpacity(0.2),
-                        spreadRadius: 1,
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      TableCalendar(
-                        firstDay: DateTime.utc(2022, 6, 1),
-                        lastDay: DateTime.utc(2024, 6, 1),
-                        focusedDay: focusedDay,
-                        calendarFormat: CalendarFormat.month,
-                        locale: 'ja_JP',
-                        sixWeekMonthsEnforced: true,
-                        pageJumpingEnabled: true,
-                        rowHeight: areaHeight * 0.07,
-                        selectedDayPredicate: (day) {
-                          return isSameDay(selectedDay, day);
-                        },
-                        onDaySelected: (onSelectedDay, onFocusedDay) {
-                          if (!editmode) {
-                            if (!isSameDay(selectedDay, onSelectedDay)) {
-                              ref.read(selectedDayProvider.notifier).state =
-                                  onSelectedDay;
-                              ref.read(focusedDayProvider.notifier).state =
-                                  onFocusedDay;
-                            }
-                          }
-                          if (editmode == true) {
-                            _changeTheDayState(
-                              focusedDay,
-                              myInformation,
-                              myEvents,
-                            );
-                          }
-                        },
-                        headerStyle: const HeaderStyle(
-                          formatButtonVisible: false,
-                          formatButtonShowsNext: false,
-                          leftChevronVisible: false,
-                          rightChevronVisible: false,
-                          headerPadding: EdgeInsets.all(0),
-                          titleTextStyle: TextStyle(),
-                          // decoration: BoxDecoration(color: Colors.blue),
-                        ),
-                        daysOfWeekStyle: DaysOfWeekStyle(
-                          weekdayStyle: TextStyle(
-                            color: stroke,
-                            fontSize: 13,
-                          ),
-                        ),
-                        calendarBuilders: CalendarBuilders(
-                          headerTitleBuilder: (context, day) {
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4.0),
-                                  child: Text(
+                                  Text(
                                     "${day.year}年${day.month}月",
                                     style: TextStyle(
                                       fontSize: 18.0,
-                                      fontWeight: FontWeight.normal,
-                                      color: stroke,
+                                      fontWeight: FontWeight.bold,
+                                      color: onMain,
                                     ),
                                   ),
-                                ),
-                                (editmode)
-                                    ? IconButton(
-                                        visualDensity: VisualDensity.compact,
-                                        onPressed: () {
-                                          ref
-                                              .read(editmodeProvider.notifier)
-                                              .state = false;
-                                        },
-                                        icon: Icon(
-                                          Icons.check,
-                                          color: stroke,
-                                          size: 22.5,
-                                        ),
-                                      )
-                                    : IconButton(
-                                        visualDensity: VisualDensity.compact,
-                                        onPressed: () {
-                                          ref
-                                              .read(editmodeProvider.notifier)
-                                              .state = true;
-                                        },
-                                        icon: Icon(
-                                          Icons.edit_calendar_outlined,
-                                          color: stroke,
-                                          size: 22.5,
-                                        ),
-                                      ),
-                              ],
-                            );
-                          },
-                          dowBuilder: (_, day) {
-                            if (day.weekday == DateTime.sunday) {
-                              return const Center(
-                                child: Text(
-                                  "日",
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              );
-                            } else if (day.weekday == DateTime.saturday) {
-                              return const Center(
-                                child: Text(
-                                  "土",
-                                  style: TextStyle(
-                                    color: Colors.blue,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              );
-                            }
-                            return null;
-                          },
-                          defaultBuilder: (context, day, focusedDay) {
-                            return (editmode)
-                                ? GestureDetector(
-                                    onTap: () {
-                                      _changeTheDayState(
-                                        day,
-                                        myInformation,
-                                        myEvents,
-                                      );
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.all(3.0),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: main,
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          Text(
-                                            day.day.toString(),
-                                            style: TextStyle(
-                                              fontSize: 14.0,
-                                              color: (myEvents.containsKey(
-                                                      DateTime.utc(day.year,
-                                                          day.month, day.day)))
-                                                  ? stroke.withOpacity(0.4)
-                                                  : stroke,
-                                            ),
+                                  SizedBox(height: 18),
+                                ],
+                              ),
+                              Column(
+                                children: [
+                                  SizedBox(height: 18),
+                                  (editmode)
+                                      ? IconButton(
+                                          visualDensity: VisualDensity.compact,
+                                          onPressed: () {
+                                            ref
+                                                .read(editmodeProvider.notifier)
+                                                .state = false;
+                                          },
+                                          icon: Icon(
+                                            Icons.check,
+                                            color: onMain,
+                                            size: 22,
                                           ),
-                                          SizedBox(height: 18)
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : Container(
-                                    margin: const EdgeInsets.all(3.0),
+                                        )
+                                      : IconButton(
+                                          visualDensity: VisualDensity.compact,
+                                          onPressed: () {
+                                            ref
+                                                .read(editmodeProvider.notifier)
+                                                .state = true;
+                                          },
+                                          icon: Icon(
+                                            Icons.edit_calendar_outlined,
+                                            color: onMain,
+                                            size: 22,
+                                          ),
+                                        ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                        defaultBuilder: (context, day, focusedDay) {
+                          return (editmode)
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _changeTheDayState(
+                                      day,
+                                      myInformation,
+                                      myEvents,
+                                    );
+                                  },
+                                  child: Container(
                                     alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: main,
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
                                     child: Column(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           day.day.toString(),
                                           style: TextStyle(
-                                            fontSize: 14.0,
+                                            fontSize: 13.0,
                                             color: (myEvents.containsKey(
                                                     DateTime.utc(day.year,
                                                         day.month, day.day)))
-                                                ? stroke.withOpacity(0.4)
-                                                : stroke,
+                                                ? onMain.withOpacity(0.4)
+                                                : onMain,
+                                          ),
+                                        ),
+                                        SizedBox(height: 18)
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  alignment: Alignment.center,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        day.day.toString(),
+                                        style: TextStyle(
+                                          fontSize: 13.0,
+                                          color: (myEvents.containsKey(
+                                                  DateTime.utc(day.year,
+                                                      day.month, day.day)))
+                                              ? onMain.withOpacity(0.4)
+                                              : onMain,
+                                        ),
+                                      ),
+                                      _buildEventMaker(
+                                        day,
+                                        myEvents,
+                                        focusedFriendsEvents,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                        },
+                        selectedBuilder: (context, day, focusedDay) {
+                          return (editmode)
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _changeTheDayState(
+                                      day,
+                                      myInformation,
+                                      myEvents,
+                                    );
+                                  },
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          day.day.toString(),
+                                          style: TextStyle(
+                                            fontSize: 13.0,
+                                            color: (myEvents.containsKey(
+                                                    DateTime.utc(day.year,
+                                                        day.month, day.day)))
+                                                ? onMain.withOpacity(0.4)
+                                                : onMain,
+                                          ),
+                                        ),
+                                        SizedBox(height: 18),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: strictMain,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          day.day.toString(),
+                                          style: TextStyle(
+                                            fontSize: 13.0,
+                                            color: (myEvents.containsKey(
+                                                    DateTime.utc(day.year,
+                                                        day.month, day.day)))
+                                                ? onMain.withOpacity(0.4)
+                                                : onMain,
                                           ),
                                         ),
                                         _buildEventMaker(
@@ -588,134 +459,30 @@ class MainScreen extends ConsumerWidget {
                                         ),
                                       ],
                                     ),
-                                  );
-                          },
-                          selectedBuilder: (context, day, focusedDay) {
-                            return (editmode)
-                                ? GestureDetector(
-                                    onTap: () {
-                                      _changeTheDayState(
-                                        day,
-                                        myInformation,
-                                        myEvents,
-                                      );
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.all(3.0),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: main,
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          Text(
-                                            day.day.toString(),
-                                            style: TextStyle(
-                                              fontSize: 14.0,
-                                              color: (myEvents.containsKey(
-                                                      DateTime.utc(day.year,
-                                                          day.month, day.day)))
-                                                  ? stroke.withOpacity(0.4)
-                                                  : stroke,
-                                            ),
-                                          ),
-                                          SizedBox(height: 18),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : Container(
-                                    margin: const EdgeInsets.all(1.0),
+                                  ),
+                                );
+                        },
+                        todayBuilder: (context, day, focusedDay) {
+                          return (editmode)
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _changeTheDayState(
+                                      day,
+                                      myInformation,
+                                      myEvents,
+                                    );
+                                  },
+                                  child: Container(
                                     alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: tertiary,
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
+                                    color: strictMain.withOpacity(0.6),
                                     child: Column(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           day.day.toString(),
                                           style: TextStyle(
-                                            fontSize: 14.0,
-                                            color: (myEvents.containsKey(
-                                                    DateTime.utc(day.year,
-                                                        day.month, day.day)))
-                                                ? stroke.withOpacity(0.4)
-                                                : stroke,
-                                          ),
-                                        ),
-                                        _buildEventMaker(
-                                          day,
-                                          myEvents,
-                                          focusedFriendsEvents,
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                          },
-                          todayBuilder: (context, day, focusedDay) {
-                            return (editmode)
-                                ? GestureDetector(
-                                    onTap: () {
-                                      _changeTheDayState(
-                                        day,
-                                        myInformation,
-                                        myEvents,
-                                      );
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.all(3.0),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: tertiary.withOpacity(0.6),
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          Text(
-                                            day.day.toString(),
-                                            style: TextStyle(
-                                              fontSize: 14.0,
-                                              color: (myEvents.containsKey(
-                                                          DateTime.utc(
-                                                              day.year,
-                                                              day.month,
-                                                              day.day)) ||
-                                                      focusedDay.month !=
-                                                          day.month)
-                                                  ? stroke.withOpacity(0.4)
-                                                  : stroke,
-                                            ),
-                                          ),
-                                          SizedBox(height: 18),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : Container(
-                                    margin: const EdgeInsets.all(3.0),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: tertiary.withOpacity(0.6),
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Text(
-                                          day.day.toString(),
-                                          style: TextStyle(
-                                            fontSize: 14.0,
+                                            fontSize: 13.0,
                                             color: (myEvents.containsKey(
                                                         DateTime.utc(
                                                             day.year,
@@ -723,8 +490,40 @@ class MainScreen extends ConsumerWidget {
                                                             day.day)) ||
                                                     focusedDay.month !=
                                                         day.month)
-                                                ? stroke.withOpacity(0.4)
-                                                : stroke,
+                                                ? onMain.withOpacity(0.4)
+                                                : onMain,
+                                          ),
+                                        ),
+                                        SizedBox(height: 18),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: strictMain.withOpacity(0.5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          day.day.toString(),
+                                          style: TextStyle(
+                                            fontSize: 13.0,
+                                            color: (myEvents.containsKey(
+                                                        DateTime.utc(
+                                                            day.year,
+                                                            day.month,
+                                                            day.day)) ||
+                                                    focusedDay.month !=
+                                                        day.month)
+                                                ? onMain.withOpacity(0.4)
+                                                : onMain,
                                           ),
                                         ),
                                         (focusedDay.month != day.month)
@@ -736,102 +535,327 @@ class MainScreen extends ConsumerWidget {
                                               ),
                                       ],
                                     ),
-                                  );
-                          },
-                          outsideBuilder: (context, day, focusedDay) {
-                            return Container(
-                              margin: const EdgeInsets.all(3.0),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: main,
-                                borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                );
+                        },
+                        outsideBuilder: (context, day, focusedDay) {
+                          return Container(
+                            alignment: Alignment.center,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  day.day.toString(),
+                                  style: TextStyle(
+                                    fontSize: 13.0,
+                                    color: onMain.withOpacity(0.4),
+                                  ),
+                                ),
+                                SizedBox(height: 17),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: -areaHeight * 0.01,
+              width: areaWidth,
+              height: areaHeight * 0.1 + deltaTop.clamp(0, areaHeight * 0.19),
+              child: GestureDetector(
+                onVerticalDragUpdate: (details) {
+                  ref.read(deltaTopProvider.notifier).state += details.delta.dy;
+                },
+                onVerticalDragEnd: (details) {
+                  if (deltaTop < areaHeight * 0.1) {
+                    ref.read(deltaTopProvider.notifier).state = 0;
+                  } else {
+                    ref.read(deltaTopProvider.notifier).state =
+                        areaHeight * 0.19;
+                  }
+                },
+                child: Container(
+                  decoration: ShapeDecoration(
+                    color: secondary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(areaHeight * 0.05),
+                        bottomRight: Radius.circular(areaHeight * 0.05),
+                      ),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: (deltaTop < areaHeight * 0.12)
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    ref.read(deltaTopProvider.notifier).state =
+                                        areaHeight * 0.19;
+                                  },
+                                  icon: Icon(Icons.keyboard_arrow_down),
+                                ),
+                                CircleAvatar(
+                                  radius: areaHeight * 0.03,
+                                  backgroundImage: CachedNetworkImageProvider(
+                                    (focusedFriendsInformations.length ==
+                                            friendsInformations.length)
+                                        ? myInformation.imageUrl
+                                        : focusedFriendsInformations[0]
+                                            .imageUrl,
+                                  ),
+                                ),
+                                SizedBox(width: areaWidth * 0.02),
+                                (focusedFriendsInformations.length ==
+                                        friendsInformations.length)
+                                    ? Text(
+                                        'マイページ',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: onSecondary,
+                                        ),
+                                      )
+                                    : Text(
+                                        focusedFriendsInformations[0].name,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: onSecondary,
+                                        ),
+                                      ),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12.0),
+                              child: IconButton(
+                                onPressed: () {
+                                  scaffoldKey.currentState!.openEndDrawer();
+                                },
+                                icon: Icon(Icons.menu),
                               ),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Text(
-                                    day.day.toString(),
-                                    style: TextStyle(
-                                      fontSize: 14.0,
-                                      color: stroke.withOpacity(0.4),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        ref
+                                            .read(deltaTopProvider.notifier)
+                                            .state = 0;
+                                      },
+                                      icon: Icon(Icons.keyboard_arrow_up),
+                                    ),
+                                    Text(
+                                      'フレンド',
+                                      style: TextStyle(
+                                        color: onSecondary,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.person_add),
+                                  iconSize: 22,
+                                  padding: EdgeInsets.only(right: 25),
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => AddFriendScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                            Container(
+                              height: areaHeight * 0.145,
+                              padding: EdgeInsets.symmetric(horizontal: 3),
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: friendsInformations.length + 1,
+                                itemBuilder: (context, index) =>
+                                    GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTap: () {
+                                    ref
+                                        .read(focusedFriendsInformationsProvider
+                                            .notifier)
+                                        .selectIndex(index);
+                                  },
+                                  child: Container(
+                                    width: 65,
+                                    margin: EdgeInsets.symmetric(
+                                      horizontal: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      color: onSecondary.withOpacity(0.1),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: areaHeight * 0.04,
+                                          backgroundImage:
+                                              CachedNetworkImageProvider(
+                                            (index == 0)
+                                                ? myInformation.imageUrl
+                                                : friendsInformations[index - 1]
+                                                    .imageUrl,
+                                          ),
+                                        ),
+                                        SizedBox(height: areaHeight * 0.005),
+                                        (index == 0)
+                                            ? Text(
+                                                'マイページ',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: onSecondary,
+                                                ),
+                                              )
+                                            : Text(
+                                                friendsInformations[index - 1]
+                                                    .name,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: onSecondary,
+                                                ),
+                                              ),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(height: 18),
-                                ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+            Positioned(
+              width: areaWidth,
+              bottom: 0,
+              height: areaHeight * 0.3 +
+                  deltaBottom.clamp(areaHeight * 0.0, areaHeight * 0.0),
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onVerticalDragUpdate: (details) {
+                  ref.read(deltaBottomProvider.notifier).state -=
+                      details.delta.dy;
+                },
+                onVerticalDragEnd: (details) {},
+                child: Container(
+                  padding: EdgeInsets.only(
+                    top: areaHeight * 0.03,
+                    left: areaWidth * 0.05,
+                    right: areaWidth * 0.05,
+                  ),
+                  decoration: ShapeDecoration(
+                    color: secondary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(areaHeight * 0.05),
+                        topRight: Radius.circular(areaHeight * 0.05),
+                      ),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: const [
+                          Text(
+                            "予定のないフレンド",
+                            style: TextStyle(
+                              fontSize: 18.0,
+                              color: onSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        height: areaHeight * 0.1,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: focusedFriendsEvents.length + 1,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                left: areaHeight * 0.005,
+                                right: areaHeight * 0.005,
+                              ),
+                              child: ColorFiltered(
+                                colorFilter: ColorFilter.mode(
+                                  (index == 0)
+                                      ? (myEvents.containsKey(DateTime.utc(
+                                              focusedDay.year,
+                                              focusedDay.month,
+                                              focusedDay.day)))
+                                          ? main.withOpacity(0.6)
+                                          : main.withOpacity(0.0)
+                                      : (focusedFriendsEvents[index - 1]
+                                              .containsKey(DateTime.utc(
+                                                  focusedDay.year,
+                                                  focusedDay.month,
+                                                  focusedDay.day)))
+                                          ? main.withOpacity(0.6)
+                                          : main.withOpacity(0.0),
+                                  BlendMode.srcATop,
+                                ),
+                                child: CircleAvatar(
+                                  radius: areaHeight * 0.03,
+                                  backgroundImage: CachedNetworkImageProvider(
+                                    (index == 0)
+                                        ? myInformation.imageUrl
+                                        : focusedFriendsInformations[index - 1]
+                                            .imageUrl,
+                                  ),
+                                ),
                               ),
                             );
                           },
                         ),
                       ),
-                      Column(
-                        children: [
-                          SizedBox(height: areaHeight * 0.05),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: const [
-                              Text(
-                                "Users state",
-                                style: TextStyle(
-                                  fontSize: 18.0,
-                                  color: stroke,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            height: areaHeight * 0.1,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: focusedFriendsEvents.length + 1,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    left: areaHeight * 0.005,
-                                    right: areaHeight * 0.005,
-                                  ),
-                                  child: ColorFiltered(
-                                    colorFilter: ColorFilter.mode(
-                                      (index == 0)
-                                          ? (myEvents.containsKey(DateTime.utc(
-                                                  focusedDay.year,
-                                                  focusedDay.month,
-                                                  focusedDay.day)))
-                                              ? main.withOpacity(0.6)
-                                              : main.withOpacity(0.0)
-                                          : (focusedFriendsEvents[index - 1]
-                                                  .containsKey(DateTime.utc(
-                                                      focusedDay.year,
-                                                      focusedDay.month,
-                                                      focusedDay.day)))
-                                              ? main.withOpacity(0.6)
-                                              : main.withOpacity(0.0),
-                                      BlendMode.srcATop,
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: areaHeight * 0.03,
-                                      backgroundColor: main,
-                                      backgroundImage:
-                                          CachedNetworkImageProvider(
-                                        (index == 0)
-                                            ? myInformation.imageUrl
-                                            : (selectedIndex == 0)
-                                                ? friendsInformations[index - 1]
-                                                    .imageUrl
-                                                : [
-                                                    friendsInformations[
-                                                        selectedIndex - 1]
-                                                  ][index - 1]
-                                                    .imageUrl,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                      Spacer(),
+                      Container(width: 320, height: 50, color: Colors.blue),
+                      SizedBox(height: 5),
                     ],
                   ),
                 ),
@@ -842,7 +866,7 @@ class MainScreen extends ConsumerWidget {
       ),
       endDrawer: Drawer(
         child: Container(
-          color: main,
+          color: secondary,
           child: Column(
             children: [
               SizedBox(height: 40),
@@ -850,7 +874,7 @@ class MainScreen extends ConsumerWidget {
                 child: Text(
                   '設定',
                   style: TextStyle(
-                    color: stroke,
+                    color: onSecondary,
                     fontSize: 20,
                   ),
                 ),

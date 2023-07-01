@@ -12,11 +12,12 @@ class AddFriendScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const Color stroke = Color(0xff00214d);
-    const Color main = Color(0xfffffffe);
-    const Color highLight = Color(0xff00ebc7);
-    const Color secondary = Color(0xffff5470);
-    const Color tertiary = Color(0xfffde24f);
+    const Color main = Color(0xff96ab94);
+    const Color onMain = Color(0xfffffffe);
+    const Color strictMain = Color(0xFF748473);
+    const Color secondary = Color(0xfffffffe);
+    const Color onSecondary = Color(0xff00214d);
+    const Color tertiary = Color(0xff614a51);
     final double areaHeight = MediaQuery.of(context).size.height -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
@@ -35,7 +36,7 @@ class AddFriendScreen extends ConsumerWidget {
             vertical: areaHeight * 0.005,
             horizontal: areaWidth * 0.05,
           ),
-          color: main,
+          color: secondary,
           child: Column(
             children: [
               Row(
@@ -44,7 +45,7 @@ class AddFriendScreen extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(
                       Icons.arrow_back_ios,
-                      color: stroke,
+                      color: onSecondary,
                       size: 20,
                     ),
                     onPressed: () {
@@ -54,7 +55,7 @@ class AddFriendScreen extends ConsumerWidget {
                   Text(
                     '友達を追加',
                     style: TextStyle(
-                      color: stroke,
+                      color: onSecondary,
                       fontSize: 20,
                     ),
                   ),
@@ -63,25 +64,25 @@ class AddFriendScreen extends ConsumerWidget {
               ),
               TextFormField(
                 style: TextStyle(
-                  color: stroke,
+                  color: onSecondary,
                 ),
                 decoration: const InputDecoration(
                   icon: Icon(Icons.person),
                   labelText: 'ユーザーID または ユーザーネーム',
                   labelStyle: TextStyle(
-                    color: stroke,
+                    color: onSecondary,
                   ),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(
-                      color: stroke,
+                      color: onSecondary,
                     ),
                   ),
                   focusedBorder: UnderlineInputBorder(
                     borderSide: BorderSide(
-                      color: stroke,
+                      color: onSecondary,
                     ),
                   ),
-                  iconColor: stroke,
+                  iconColor: onSecondary,
                 ),
                 onChanged: (String field) {
                   ref
@@ -103,23 +104,30 @@ class AddFriendScreen extends ConsumerWidget {
                       title: Text(
                         serchedUsers[index].name,
                         style: TextStyle(
-                          color: stroke,
+                          color: onSecondary,
                           fontSize: 20,
                         ),
                       ),
                       trailing: IconButton(
-                        onPressed: () {
-                          FirebaseFirestore.instance
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
                               .collection('users')
                               .doc(myInformation.id)
                               .update({
                             'friendList':
                                 FieldValue.arrayUnion([serchedUsers[index].id]),
                           });
+                          await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(serchedUsers[index].id)
+                              .update({
+                            'friendList':
+                                FieldValue.arrayUnion([myInformation.id]),
+                          });
                         },
                         icon: Icon(
                           Icons.person_add,
-                          color: stroke,
+                          color: onSecondary,
                         ),
                       ),
                     );

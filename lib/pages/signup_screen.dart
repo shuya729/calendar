@@ -44,6 +44,7 @@ class _SignupScreenState extends State<SignupScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Spacer(flex: 8),
                   const Text(
                     'Signup',
                     style: TextStyle(
@@ -51,7 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 40),
+                  Spacer(flex: 3),
                   TextFormField(
                     decoration: const InputDecoration(
                       icon: Icon(Icons.mail),
@@ -132,7 +133,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 15),
+                  Spacer(flex: 3),
                   ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
@@ -194,7 +195,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   //     ),
                   //   ],
                   // ),
-                  SizedBox(height: 80),
+                  Spacer(flex: 10),
                 ],
               ),
             ),

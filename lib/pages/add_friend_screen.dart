@@ -124,6 +124,7 @@ class AddFriendScreen extends ConsumerWidget {
                             'friendList':
                                 FieldValue.arrayUnion([myInformation.id]),
                           });
+                          Navigator.pop(context);
                         },
                         icon: Icon(
                           Icons.person_add,

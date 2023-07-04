@@ -35,12 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: main,
       body: SafeArea(
         child: Container(
-          color: main,
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Spacer(flex: 8),
                 const Text(
                   'Login',
                   style: TextStyle(
@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 40),
+                Spacer(flex: 3),
                 TextFormField(
                   decoration: const InputDecoration(
                     icon: Icon(Icons.mail),
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     });
                   },
                 ),
-                const SizedBox(height: 15),
+                Spacer(flex: 3),
                 ElevatedButton(
                   onPressed: () async {
                     try {
@@ -133,13 +133,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 //     ),
                 //   ],
                 // ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 30.0),
-                  child: Divider(
-                    height: 3,
-                    color: Colors.black54,
-                  ),
+                Spacer(flex: 2),
+                Divider(
+                  height: 3,
+                  color: Colors.black54,
                 ),
+                Spacer(flex: 1),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -156,6 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
+                Spacer(flex: 10),
               ],
             ),
           ),

@@ -78,11 +78,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       print('Failed to upload: $e');
       await widget.user.delete();
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const MyApp(),
-        ),
-      );
     }
   }
 
@@ -111,6 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Spacer(flex: 8),
                 const Text(
                   'Profile',
                   style: TextStyle(
@@ -118,7 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 40),
+                Spacer(flex: 2),
                 TextFormField(
                   decoration: const InputDecoration(
                     icon: Icon(Icons.account_circle),
@@ -130,9 +126,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     });
                   },
                 ),
-                SizedBox(height: 40),
+                Spacer(flex: 3),
                 Text("プロフィール写真を選択"),
-                const SizedBox(height: 10),
+                const Spacer(flex: 1),
                 GestureDetector(
                   onTap: () {
                     pickImage();
@@ -148,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           size: 120,
                         ),
                 ),
-                const SizedBox(height: 40),
+                const Spacer(flex: 3),
                 ElevatedButton(
                   onPressed: () {
                     signUp();
@@ -180,7 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 //     ),
                 //   ],
                 // ),
-                SizedBox(height: 80),
+                Spacer(flex: 10),
               ],
             ),
           ),
